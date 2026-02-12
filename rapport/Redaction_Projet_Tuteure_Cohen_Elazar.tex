@@ -1,0 +1,141 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+    filecolor=blue
+}
+
+\title{Projet Tuteuré: Bots culinaire discord}
+\author{Elazar Cohen}
+\date{\today}
+
+\begin{document}
+
+    \maketitle
+
+    \tableofcontents
+    \newpage
+
+    \section{Introduction}
+    Ce fichier présente mon projet tuteuré pour le deuxieme semestre de L3.
+    Le projet est un bot discord dans un premier temps qui propose a un groupe de personne 
+    des recettes personnalisé a chacun en tenant compte de plusieurs critères comme les aliments qu'ils n'apprecient pas, 
+    qu'ils apprecient etc.
+
+
+    \section{Présentation du projet et fonctionnalités}
+
+        \paragraph{Introduction}
+            Le projet consiste à concevoir un bot Discord capable de proposer des recettes personnalisées aux utilisateurs d’un même groupe.
+            Les utilisateurs pourront interagir avec le bot via des commandes textuelles.
+            Contrairement à un simple système de recommandation de recettes, le bot créera des recettes personnalisées à partir des informations sur les utilisateurs :
+            leurs goûts, les instruments de cuisine qu’ils ont à disposition ou encore leur budget.
+            Le bot est conçu pour fonctionner dans un cadre collaboratif, ou pour être adapté à une seule personne.
+
+        \paragraph{Objectifs du projet}
+            L’objectif principal de ce projet est de développer un système capable de générer des recettes culinaires adaptées aux préférences et contraintes des utilisateurs.
+            Le projet vise à montrer qu’il est possible d’utiliser un modèle de langage pour produire des contenus personnalisés de manière contrôlée, en tenant compte de données utilisateurs structurées.
+            Un autre objectif est de proposer un outil simple d’utilisation, intégré à une plateforme de communication existante, afin de faciliter l’adoption par les utilisateurs.
+
+        \paragraph{Fonctionnalités principales}
+            Le bot Discord proposera plusieurs fonctionnalités :
+            \begin{itemize}
+                \item création et gestion de profils utilisateurs (préférences alimentaires, contraintes, budget) ;
+                \item génération de recettes personnalisées à partir des informations fournies ;
+                \item adaptation des recettes à un utilisateur unique ou à un groupe ;
+                \item prise en compte de contraintes simples comme les aliments non appréciés ou indisponibles ;
+                \item interaction avec les utilisateurs via des commandes textuelles.
+            \end{itemize}
+
+
+        \section{Analyse des besoins}
+
+            L’utilisation du bot répond à un besoin courant : proposer des idées de repas adaptées à des personnes ayant des goûts et des contraintes différentes.
+            Dans un contexte de groupe, il est souvent difficile de trouver une recette qui convienne à tout le monde.
+            Le bot vise à simplifier cette prise de décision en générant automatiquement des propositions cohérentes avec les préférences exprimées.
+
+            Les besoins principaux identifiés sont :
+            \begin{itemize}
+                \item une personnalisation des recettes ;
+                \item une prise en compte de plusieurs utilisateurs ;
+                \item une interaction simple et rapide ;
+                \item une génération de recettes originales et adaptées.
+            \end{itemize}
+
+            
+
+        \section{Choix techniques}
+
+            \paragraph{Langage et environnement}
+            Le projet sera développé en Python.
+            Ce langage a été choisi pour sa simplicité, sa lisibilité et son écosystème riche, notamment dans le domaine de l’intelligence artificielle.
+            Python permet également une intégration simple avec des bibliothèques dédiées à la création de bots Discord.
+
+            \paragraph{Plateforme Discord}
+            Discord a été choisi comme plateforme de déploiement car il s’agit d’un outil largement utilisé pour la communication de groupe.
+            L’intégration du bot dans un serveur Discord permet une interaction naturelle avec plusieurs utilisateurs dans un même espace.
+
+            \paragraph{Modèle de langage}
+            Le bot s’appuiera sur un modèle de langage exécuté localement.
+            Ce choix permet de garder un contrôle sur le fonctionnement du système et d’éviter la dépendance à des services externes.
+            Le modèle sera utilisé pour générer des recettes à partir d’un contexte fourni par le système.
+
+            
+
+        \section{Conception générale du système}
+
+            Le fonctionnement du bot repose sur plusieurs composants :
+            \begin{itemize}
+                \item une interface utilisateur via Discord ;
+                \item un module de gestion des profils utilisateurs ;
+                \item un module de génération de recettes ;
+                \item un modèle de langage chargé de produire les recettes.
+            \end{itemize}
+
+            Lorsqu’un utilisateur effectue une demande, le bot récupère les informations nécessaires, construit un contexte adapté et transmet ces informations au modèle de langage afin de générer une recette personnalisée.
+
+            
+
+        \section{Limites et difficultés}
+
+            Plusieurs difficultés sont anticipées dans le cadre de ce projet :
+            \begin{itemize}
+                \item la gestion de contraintes contradictoires entre plusieurs utilisateurs ;
+                \item la cohérence des recettes générées ;
+                \item le contrôle de la personnalisation tout en conservant une certaine originalité ;
+                \item les limites liées aux performances d’un modèle de langage local.
+            \end{itemize}
+
+
+            
+        \pagebreak
+        \section{Perspectives d’amélioration}
+
+            Plusieurs pistes d’amélioration peuvent être envisagées :
+            \begin{itemize}
+                \item amélioration de la personnalisation à long terme ;
+                \item ajout de retours utilisateurs pour ajuster les préférences ;
+                \item prise en compte de nouvelles contraintes nutritionnelles ;
+                \item amélioration de la diversité des recettes générées.
+            \end{itemize}
+
+            
+
+        \section{Conclusion}
+
+            Ce projet tuteuré a pour objectif de mettre en œuvre un bot Discord capable de générer des recettes personnalisées à l’aide d’un modèle de langage.
+            Il permet d’aborder des notions telles que la personnalisation, la gestion de données utilisateurs et l’utilisation raisonnée de l’intelligence artificielle.
+            Le projet constitue une application concrète des compétences acquises durant la licence informatique.
+
+            
+
+\end{document}

@@ -1,0 +1,8 @@
+# pour le le rapport en latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
