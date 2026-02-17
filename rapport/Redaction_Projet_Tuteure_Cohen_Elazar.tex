@@ -26,10 +26,10 @@
     \newpage
 
     \section{Introduction}
-    Ce fichier présente mon projet tuteuré pour le deuxieme semestre de L3.
-    Le projet est un bot discord dans un premier temps qui propose a un groupe de personne 
-    des recettes personnalisé a chacun en tenant compte de plusieurs critères comme les aliments qu'ils n'apprecient pas, 
-    qu'ils apprecient etc.
+        Ce fichier présente mon projet tuteuré pour le deuxieme semestre de L3.
+        Le projet est un bot discord dans un premier temps qui propose a un groupe de personne 
+        des recettes personnalisé a chacun en tenant compte de plusieurs critères comme les aliments qu'ils n'apprecient pas, 
+        qu'ils apprecient etc.
 
 
     \section{Présentation du projet et fonctionnalités}
@@ -76,19 +76,19 @@
         \section{Choix techniques}
 
             \paragraph{Langage et environnement}
-            Le projet sera développé en Python.
-            Ce langage a été choisi pour sa simplicité, sa lisibilité et son écosystème riche, notamment dans le domaine de l’intelligence artificielle.
-            Python permet également une intégration simple avec des bibliothèques dédiées à la création de bots Discord.
-
+                Le projet sera développé en Python.
+                Ce langage a été choisi pour sa simplicité, sa lisibilité et son écosystème riche, notamment dans le domaine de l’intelligence artificielle.
+                Python permet également une intégration simple avec des bibliothèques dédiées à la création de bots Discord.
             \paragraph{Plateforme Discord}
-            Discord a été choisi comme plateforme de déploiement car il s’agit d’un outil largement utilisé pour la communication de groupe.
-            L’intégration du bot dans un serveur Discord permet une interaction naturelle avec plusieurs utilisateurs dans un même espace.
+                Discord a été choisi comme plateforme de déploiement car il s’agit d’un outil largement utilisé pour la communication de groupe.
+                L’intégration du bot dans un serveur Discord permet une interaction naturelle avec plusieurs utilisateurs dans un même espace.
 
             \paragraph{Modèle de langage}
-            Le bot s’appuiera sur un modèle de langage exécuté localement.
-            Ce choix permet de garder un contrôle sur le fonctionnement du système et d’éviter la dépendance à des services externes.
-            Le modèle sera utilisé pour générer des recettes à partir d’un contexte fourni par le système.
+                Le bot s’appuiera sur un modèle de langage exécuté localement.
+                Ce choix permet de garder un contrôle sur le fonctionnement du système et d’éviter la dépendance à des services externes.
+                Le modèle sera utilisé pour générer des recettes à partir d’un contexte fourni par le système.
 
+            
             
 
         \section{Conception générale du système}
@@ -102,7 +102,29 @@
             \end{itemize}
 
             Lorsqu’un utilisateur effectue une demande, le bot récupère les informations nécessaires, construit un contexte adapté et transmet ces informations au modèle de langage afin de générer une recette personnalisée.
-
+        
+        \section{Organisation} 
+            \subsection{A faire} 
+                \paragraph{Semaine 1 : 12 fevrier - 19 fevrier} 
+                    \begin{itemize} 
+                        \item Organisation et clarification du travail demandé 
+                        \item Recherche des données 
+                        \item Création du shéma relationnel et création du dump de la base de donnée relationnel 
+                    \end{itemize} 
+                \paragraph{Semaine 2 : 19 fevrier - 26 fevrier} 
+                    \begin{itemize} 
+                        \item Création du bot discord 
+                        \item Automatisation pour rentrer les données dans la base et vérifications des données 
+                        \item Automatisation de la recherche des données par index dans la base de donnée 
+                        \item Téléchargement du LLM locale 
+                    \end{itemize} 
+                \paragraph{Semaine 2 : 19 fevrier - 26 fevrier} 
+                    \begin{itemize} 
+                        \item Joindre les 3 parties (données, LLM et Bot) 
+                        \item Lancement du bot pour avoir des feedbacks 
+                        \item possiblement finir si je n'ai pas fini une partie 
+                    \end{itemize} 
+            \subsection{Fait}
             
 
         \section{Limites et difficultés}
