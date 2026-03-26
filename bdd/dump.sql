@@ -11,7 +11,6 @@ CREATE TABLE recipe (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
-    instructions TEXT,
     preparation_time INT,
     cooking_time INT,
     servings INT,
@@ -29,6 +28,7 @@ CREATE TABLE recipe_ingredient (
     ingredient_id INT REFERENCES ingredient(id) ON DELETE CASCADE,
     quantity NUMERIC,
     unit VARCHAR(50),
+    particularity VARCHAR(10)
     PRIMARY KEY (recipe_id, ingredient_id)
 );
 

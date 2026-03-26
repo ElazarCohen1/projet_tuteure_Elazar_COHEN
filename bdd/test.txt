@@ -1,0 +1,21 @@
+ParsedIngredient(
+    name=[IngredientText(text='No-Bake Nut Cookies', confidence=0.98342, starting_index=0), 
+    IngredientText(text='brown sugar', confidence=0.953288, starting_index=9),
+    IngredientText(text='evaporated milk', confidence=0.77231, starting_index=15),
+    IngredientText(text='broken nuts (pecans)', confidence=0.821528, starting_index=25), 
+    IngredientText(text='butter', confidence=0.693097, starting_index=33),
+    IngredientText(text='margarine', confidence=0.897277, starting_index=35), 
+    IngredientText(text='rice biscuits', confidence=0.905881, starting_index=43),
+    IngredientText(text='mix brown sugar', confidence=0.876167, starting_index=53), 
+    IngredientText(text='minutes.', confidence=0.802011, starting_index=123), 
+    IngredientText(text='milk', confidence=0.464266, starting_index=137)], size=None, 
+    amount=[IngredientAmount(quantity=Fraction(1, 1), quantity_max=Fraction(1, 1), unit=<Unit('cup')>, text='1 c', confidence=0.982747, starting_index=4, unit_system=<UnitSystem.US_CUSTOMARY: 'us_customary'>, APPROXIMATE=False, SINGULAR=False, RANGE=False, MULTIPLIER=False, PREPARED_INGREDIENT=False), 
+    IngredientAmount(quantity=Fraction(1, 2), quantity_max=Fraction(1, 2), unit=<Unit('cup')>, text='1/2 c', confidence=0.690573, starting_index=22, unit_system=<UnitSystem.US_CUSTOMARY: 'us_customary'>, APPROXIMATE=False, SINGULAR=False, RANGE=False, MULTIPLIER=False, PREPARED_INGREDIENT=False), 
+    IngredientAmount(quantity=Fraction(2, 1), quantity_max=Fraction(2, 1), unit='Tbsps', text='2 Tbsps', confidence=0.831639, starting_index=31, unit_system=<UnitSystem.OTHER: 'other'>, APPROXIMATE=False, SINGULAR=False, RANGE=False, MULTIPLIER=False, PREPARED_INGREDIENT=False), 
+    IngredientAmount(quantity=Fraction(7, 2), quantity_max=Fraction(7, 2), unit=<Unit('cup')>, text='3 1/2 c', confidence=0.784754, starting_index=37, unit_system=<UnitSystem.US_CUSTOMARY: 'us_customary'>, APPROXIMATE=False, SINGULAR=False, RANGE=False, MULTIPLIER=False, PREPARED_INGREDIENT=False),
+     IngredientAmount(quantity=Fraction(2, 1), quantity_max=Fraction(2, 1), unit=<Unit('teaspoon')>, text='2 teaspoons', confidence=0.779101, starting_index=102, unit_system=<UnitSystem.US_CUSTOMARY: 'us_customary'>, APPROXIMATE=False, SINGULAR=False, RANGE=False, MULTIPLIER=False, PREPARED_INGREDIENT=False), 
+     IngredientAmount(quantity=Fraction(30, 1), quantity_max=Fraction(30, 1), unit='', text='30', confidence=0.709748, starting_index=122, unit_system=<UnitSystem.NONE: 'none'>, APPROXIMATE=True, SINGULAR=False, RANGE=False, MULTIPLIER=False, PREPARED_INGREDIENT=False)], 
+    preparation=IngredientText(text='bite size shredded, Stir over medium heat until mixture bubbles all over top., Boil and stir 5 minutes more., mix well., drop and shape into 30 clusters on wax paper., size shredded', confidence=0.869951, starting_index=40),
+    comment=IngredientText(text='firmly packed, 1/2 c., 1/2 tsp vanilla, In a heavy 2 quart saucepan, nuts, evaporated milk and butter or margarine., Take off heat., Stir in vanilla and cereal, Using, Let stand until firm, vanilla, nuts', confidence=0.770765, starting_index=7), 
+    purpose=None, foundation_foods=[], sentence='No-Bake Nut Cookies,1 c. firmly packed brown sugar,1/2 c. evaporated milk,1/2 tsp. vanilla,1/2 c. broken nuts (pecans),2 Tbsp. butter or margarine,3 1/2 c. bite size shredded rice biscuits,In a heavy 2-quart saucepan, mix brown sugar, nuts, evaporated milk and butter or margarine.,Stir over medium heat until mixture bubbles all over top.,Boil and stir 5 minutes more. T
+    ake off heat.,Stir in vanilla and cereal; mix well.,Using 2 teaspoons, drop and shape into 30 clusters on wax paper.,Let stand until firm, about 30 minutes. size shredded rice biscuits,vanilla,brown sugar,nuts,milk,butter')
