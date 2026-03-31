@@ -12,3 +12,6 @@ bot/.env
 
 # trop gros fichier de recette 
 bdd/recipes_data.csv
+
+bdd/__pycache__/
+bdd/.env

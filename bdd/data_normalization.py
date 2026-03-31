@@ -2,10 +2,10 @@
     This module normalizes recipe data coming from a dataset using the parse ingredient nlp
     @author Elazar COHEN
 """
-import csv
-import json
 from ingredient_parser import parse_ingredient
 import re
+from fractions import Fraction
+
 
 def parse_string(chaine:str):
     return parse_ingredient(chaine.lower())
@@ -18,32 +18,7 @@ def normalize_word(word: str) -> str:
 
     return temp.strip()
 
-def csv_to_dict(csv_name_file:str,separator:str) -> list[dict]:
-    """ 
-        transform a csv file into a dict 
-        Args :
-            - A filename for a csv file 
-        Returns: 
-            - the list of dict with the csv data 
-            - Output format :  [{
-                "id": str,
-                "title": str,
-                "ingredients": list[str],
-                "directions": list[str] | None
-            },...]
-        Warning :
-            - the first row of the file need to have the name of the columns
-    """
-    result = []
-    with  open(csv_name_file) as file:
-        reader = csv.DictReader(file,delimiter=separator)
-        for row in reader:
-            row_dict = dict(row)
-            for key, value in row_dict.items():
-                if value and value[0] == '[':
-                    row_dict[key] = json.loads(value)
-            result.append(row_dict)
-    return result
+
 
 
 def parse_list_ingredients(ingredients:list[str])-> list:
@@ -52,15 +27,53 @@ def parse_list_ingredients(ingredients:list[str])-> list:
 
     return liste_parse
 
-def transform_parse_ingredient_to_dict(parse_ing) -> dict:
+
+def safe_quantity(q):
+    """Convertit quantity en float si possible, sinon None."""
+    if q is None or q == '':
+        return None
+    if isinstance(q, Fraction):
+        return round(float(q),1)
+    try:
+        return round(float(q),1)
+    except ValueError:
+        return None
+
+
+def check_in_liste(l:list[dict],elm:str)->bool:
+    for d in l:
+        for value in d.values():
+            if value == elm:
+                return True
+    return False
+    
+def transform_parse_ingredient_to_dict(parse_ing) -> list[dict]:
     liste = []
+
     for ing in parse_ing:
-        res = {}
-        res["name"] = ing.name[0].text
-        res["quantity"] = float(ing.amount[0].quantity)
-        res["unit"] = ing.amount[0].unit
-        res["preparation"] = ing.preparation.text if ing.preparation else ""
-        liste.append(res)
+        # Nom et préparation de base
+        name = ing.name[0].text if ing.name else ""
+        preparation = ing.preparation.text if ing.preparation else ""
+        if check_in_liste(liste,name):
+            continue
+        if not ing.amount:
+            liste.append({
+                "name": name,
+                "quantity": None,
+                "unit": "",
+                "preparation": preparation
+            })
+            continue
+        else :
+            q = safe_quantity(ing.amount[0].quantity)
+            u = str(ing.amount[0].unit) if ing.amount[0].unit else ""
+            liste.append({
+                "name": name,
+                "quantity": q,
+                "unit": u,
+                "preparation": preparation
+            })
+            
     return liste
 
 
@@ -90,11 +103,43 @@ def normalize_data(recipe:dict) -> dict:
     res["steps"] = list_steps
     return res
 
-if __name__ == "__main__":
-    d = csv_to_dict("./test.csv",',')
-    print(d[1])
-    normalize_d = normalize_data(d[1])
 
-    for key,value in normalize_d.items():
-        print(f"{key} : {value}\n")
+    
+import csv
+import json
+
+
+def csv_to_dict(csv_name_file:str,separator:str) -> list[dict]:
+    """ 
+        transform a csv file into a dict 
+        Args :
+            - A filename for a csv file 
+        Returns: 
+            - the list of dict with the csv data 
+            - Output format :  [{
+                "id": str,
+                "title": str,
+                "ingredients": list[str],
+                "directions": list[str] | None
+            },...]
+        Warning :
+            - the first row of the file need to have the name of the columns
+    """
+    result = []
+    with  open(csv_name_file) as file:
+        reader = csv.DictReader(file,delimiter=separator)
+        for row in reader:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if value and value[0] == '[':
+                    row_dict[key] = json.loads(value)
+            result.append(row_dict)
+    return result
+if __name__=="__main__":
+    d = csv_to_dict("./test.csv",',')
+    normalize_d = []
+    for i in d:
+        res = normalize_data(i)
+        normalize_d.append(res)
+        print(res["ingredients"])
 

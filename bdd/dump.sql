@@ -1,8 +1,8 @@
 DROP TABLE IF EXISTS recipe_ingredient CASCADE;
 DROP TABLE IF EXISTS recipe_category CASCADE;
 DROP TABLE IF EXISTS recipe_diet CASCADE;
-DROP TABLE IF EXISTS step CASCADE;
-DROP TABLE IF EXISTS ingredient CASCADE;
+DROP TABLE IF EXISTS steps CASCADE;
+DROP TABLE IF EXISTS ingredients CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
 DROP TABLE IF EXISTS diet CASCADE;
 DROP TABLE IF EXISTS recipe CASCADE;
@@ -18,17 +18,17 @@ CREATE TABLE recipe (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ingredient (
+CREATE TABLE ingredients (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE recipe_ingredient (
     recipe_id INT REFERENCES recipe(id) ON DELETE CASCADE,
-    ingredient_id INT REFERENCES ingredient(id) ON DELETE CASCADE,
+    ingredient_id INT REFERENCES ingredients(id) ON DELETE CASCADE,
     quantity NUMERIC,
     unit VARCHAR(50),
-    particularity VARCHAR(10)
+    particularity VARCHAR,
     PRIMARY KEY (recipe_id, ingredient_id)
 );
 
@@ -54,7 +54,7 @@ CREATE TABLE recipe_diet (
     PRIMARY KEY (recipe_id, diet_id)
 );
     
-CREATE TABLE step (
+CREATE TABLE steps (
     id SERIAL PRIMARY KEY,
     recipe_id INT REFERENCES recipe(id) ON DELETE CASCADE,
     step_number INT NOT NULL,
