@@ -1,5 +1,5 @@
 from pgvector.psycopg2 import register_vector
-import db 
+import bdd.db as db
 
 
 def SQL_requete(requete: str, params: tuple = None, fetch: bool = False):

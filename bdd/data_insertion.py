@@ -1,7 +1,7 @@
 """
     This module insert data from a dataset into a given postgres database 
 """
-from sql_request import SQL_requete
+from bdd.sql_request import SQL_requete
 
 
 def insert_recipe(recipe: dict) -> int:

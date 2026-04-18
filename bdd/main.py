@@ -1,12 +1,14 @@
-import data_normalization as N
-import data_insertion as I
-import research as R
+import bdd.data_normalization as N
+import bdd.data_insertion as I
+import bdd.research as R
 import csv
-import json
+# import json
 from sentence_transformers import SentenceTransformer
 import os
 os.environ["HF_HUB_OFFLINE"] = "1"
-import ast  
+import ast 
+import asyncio # transform to async
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def csv_to_dict(csv_name_file: str, separator: str) -> list[dict]:
     result = []
@@ -24,6 +26,16 @@ def csv_to_dict(csv_name_file: str, separator: str) -> list[dict]:
                             continue
             result.append(row_dict)
     return result
+
+
+async def generate_recipe(request: str):
+    loop = asyncio.get_event_loop()
+    
+    results = await loop.run_in_executor(None, R.search_similar, request, model, 5)
+    result = await loop.run_in_executor(None, R.ask_mistral_with_context, request, results)
+    
+    return result
+
 
 if __name__ == "__main__":
     data = csv_to_dict("./test.csv", ',')

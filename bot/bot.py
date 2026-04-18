@@ -2,7 +2,9 @@ import discord
 import os
 from dotenv import load_dotenv
 from discord.ext import commands 
+from bdd.main import generate_recipe
 load_dotenv()
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -18,10 +20,19 @@ async def on_ready():
         print(e)
 
 
-@bot.tree.command(name="recette", description="renvoie une recette avec les informations demandé")
-async def recette(interation:discord.Interaction):
-    await interation.response.send_message("alors la recette arrive")
-    print("j'ai besoin de la base de donnée et du llm ")
+@bot.tree.command(name="recette", description="renvoie une recette")
+async def recette(interaction: discord.Interaction, request: str):
+    await interaction.response.defer(thinking=True)
+
+    try:
+        recipe = await generate_recipe(request)
+        await interaction.followup.send(recipe)
+
+    except Exception as e:
+        await interaction.followup.send(
+            "Une erreur est survenue lors de la génération de la recette."
+        )
+        print(f"Erreur recette: {e}")
 
 
 bot.run(os.getenv('TOKEN'))
