@@ -1,51 +1,25 @@
 """
     This module insert data from a dataset into a given postgres database 
 """
-import db 
-
-
-
-
-def SQL_requete(requete: str, params: tuple = None, fetch: bool = False):
-    """
-    Exécute une requête SQL.
-    Args:
-        requete (str): La requête SQL
-        params (tuple, optional): Paramètres SQL
-        fetch (bool): True si on veut récupérer les résultats
-    Returns:
-        list[namedtuple] si fetch=True, sinon True
-    """
-    with db.connect() as conn:
-        with conn.cursor() as cur:
-            if params:
-                cur.execute(requete, params)
-            else:
-                cur.execute(requete)
-
-            if fetch:
-                return cur.fetchall()  
-
-            conn.commit()
-            return True
-
+from sql_request import SQL_requete
 
 
 def insert_recipe(recipe: dict) -> int:
     """
-    Insère une recette et retourne son ID.
+    Insert a recipe in the db .
+    RETURNS : the recipe_id 
     """
-    #insert the recipe 
     result = SQL_requete(
         "INSERT INTO recipe(title) VALUES (%s) RETURNING id",
         (recipe["title"],),
         fetch=True
     )
     recipe_id = result[0].id
+    return recipe_id
 
-    # all the ingredients for this recipe
+def insert_ingredients(recipe_id,ingredients:dict):
     ingredient_ids = {}
-    for ing in recipe["ingredients"]:
+    for ing in ingredients:
         res = SQL_requete(
             """
             INSERT INTO ingredients(name)
@@ -78,10 +52,10 @@ def insert_recipe(recipe: dict) -> int:
                 ing.get("unit"),
                 ing.get("preparation")
             )
-        )
+        )    
 
-    # all the steps for the recipe
-    for i in range(len(recipe["steps"])) :
+def insert_steps(recipe_id:int, steps:dict):
+    for i in range(len(steps)) :
         SQL_requete(
             """
                 INSERT INTO steps(recipe_id,step_number,instruction) 
@@ -90,14 +64,35 @@ def insert_recipe(recipe: dict) -> int:
             (
                recipe_id,
                i,
-               recipe["steps"][i]
+               steps[i]
             )
         )
 
-    return recipe_id
+
+def insert_embeddings(recipe:dict,model,recipe_id):
+    chunks = []
+    for i, step in enumerate(recipe["steps"]):
+        chunks.append({"chunk_text": step, "chunk_index": i, "chunk_type": "step"})
+
+    # ingredients
+    for i, ing in enumerate(recipe["ingredients"]):
+        text = f"{ing.get('quantity','')} {ing.get('unit','')} {ing['name']}".strip()
+        if text:
+            chunks.append({"chunk_text": text, "chunk_index": i, "chunk_type": "ingredient"})
+    
+    for c in chunks:
+        emb = model.encode(c["chunk_text"]).tolist()
+        SQL_requete(
+            "INSERT INTO recipe_embeddings(recipe_id, chunk_index, chunk_text, chunk_type, embedding, model_version) "
+            "VALUES (%s,%s,%s,%s,%s,%s)"
+            "ON CONFLICT (recipe_id, chunk_index, chunk_type) DO UPDATE "
+            "SET chunk_text = EXCLUDED.chunk_text, embedding = EXCLUDED.embedding, model_version = EXCLUDED.model_version",
+            
+            (recipe_id, c["chunk_index"], c["chunk_text"], c["chunk_type"], emb, "all-MiniLM-L6-v2")
+        )
 
 
-def insert_dataset(dataset: list[dict]) -> bool:
+def insert_dataset(dataset: list[dict],model) -> bool:
     """
     Insère un dataset complet de recettes.
     Args:
@@ -107,11 +102,16 @@ def insert_dataset(dataset: list[dict]) -> bool:
     """
     try:
         for recipe in dataset:
-            insert_recipe(recipe)
+            recipe_id = insert_recipe(recipe)
+            insert_ingredients(recipe_id,recipe["ingredients"])
+            insert_steps(recipe_id,recipe["steps"])
+            insert_embeddings(recipe,model,recipe_id)
         return True
     except Exception as e:
         print("Erreur lors de l'insertion du dataset :", e)
         return False
+
+
 
 
   

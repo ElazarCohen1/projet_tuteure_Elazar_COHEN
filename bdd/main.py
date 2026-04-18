@@ -1,42 +1,48 @@
 import data_normalization as N
 import data_insertion as I
+import research as R
 import csv
 import json
+from sentence_transformers import SentenceTransformer
+import os
+os.environ["HF_HUB_OFFLINE"] = "1"
+import ast  
 
-
-def csv_to_dict(csv_name_file:str,separator:str) -> list[dict]:
-    """ 
-        transform a csv file into a dict 
-        Args :
-            - A filename for a csv file 
-        Returns: 
-            - the list of dict with the csv data 
-            - Output format :  [{
-                "id": str,
-                "title": str,
-                "ingredients": list[str],
-                "directions": list[str] | None
-            },...]
-        Warning :
-            - the first row of the file need to have the name of the columns
-    """
+def csv_to_dict(csv_name_file: str, separator: str) -> list[dict]:
     result = []
-    with  open(csv_name_file) as file:
-        reader = csv.DictReader(file,delimiter=separator)
+    with open(csv_name_file, encoding='utf-8') as file: 
+        reader = csv.DictReader(file, delimiter=separator)
         for row in reader:
             row_dict = dict(row)
             for key, value in row_dict.items():
-                if value and value[0] == '[':
-                    row_dict[key] = json.loads(value)
+                if value:
+                    v_strip = value.strip() 
+                    if v_strip.startswith('[') and v_strip.endswith(']'):
+                        try:
+                            row_dict[key] = ast.literal_eval(v_strip)
+                        except (ValueError, SyntaxError):
+                            continue
             result.append(row_dict)
     return result
 
+if __name__ == "__main__":
+    data = csv_to_dict("./test.csv", ',')
+    model = SentenceTransformer("all-MiniLM-L6-v2")
 
-if __name__== "__main__":
-    d = csv_to_dict("./test.csv",',')
-    normalize_d = []
-    for i in d:
-        res = N.normalize_data(i)
-        normalize_d.append(res)
+    # normalized_data = []
+    # for row in data:
+    #     normalized_row = N.normalize_data(row)
+    #     normalized_data.append(normalized_row)
 
-    I.insert_dataset(normalize_d)
+    # try:
+    #     I.insert_dataset(normalized_data, model)
+    # except Exception as e:
+    #     print("ERREUR INSERTION :", e)
+    #     exit(1)  
+
+    # print("Dataset inséré avec succès !")
+
+    query = "plat avec des carrotes"
+    results = R.search_similar(query, model, top_k=5)
+    result = R.ask_mistral_with_context(query, results)
+    print(result)

@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS ingredients CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
 DROP TABLE IF EXISTS diet CASCADE;
 DROP TABLE IF EXISTS recipe CASCADE;
+DROP TABLE IF EXISTS recipe_embeddings;
 
 CREATE TABLE recipe (
     id SERIAL PRIMARY KEY,
@@ -55,9 +56,19 @@ CREATE TABLE recipe_diet (
 );
     
 CREATE TABLE steps (
-    id SERIAL PRIMARY KEY,
     recipe_id INT REFERENCES recipe(id) ON DELETE CASCADE,
     step_number INT NOT NULL,
     instruction TEXT NOT NULL,
-    UNIQUE(recipe_id, step_number)
+    PRIMARY KEY(recipe_id, step_number)
+);
+
+
+CREATE TABLE recipe_embeddings (
+    recipe_id INT REFERENCES recipe(id) ON DELETE CASCADE,
+    chunk_index INT NOT NULL,
+    chunk_text TEXT NOT NULL,
+    chunk_type VARCHAR(50) NOT NULL, 
+    embedding vector(384),  
+    model_version VARCHAR(50) DEFAULT 'all-MiniLM-L6-v2',
+    PRIMARY KEY (recipe_id, chunk_index, chunk_type)
 );

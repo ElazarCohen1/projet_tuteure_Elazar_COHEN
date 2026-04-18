@@ -11,20 +11,33 @@ def parse_string(chaine:str):
     return parse_ingredient(chaine.lower())
    
 
+import re
+
 def normalize_word(word: str) -> str:
+    if not word:
+        return ""
 
-    temp = ''.join([c.lower() if c.isalpha() or c.isnumeric() else ' ' for c in word])
-    temp = re.sub(r'\s+', ' ', temp)
+    word = word.lower()
 
-    return temp.strip()
+    word = re.sub(r"[^a-z0-9\s\./\-]", " ", word)
 
+    word = word.replace("\\", " ")
 
+    word = re.sub(r"\s+", " ", word)
 
+    return word.strip()
+
+def normalize_quantity(quantity:str):
+    if not quantity :
+        return ""
+    
+    quantity = quantity.replace("\\","/")
+    return quantity.strip()
+    
 
 def parse_list_ingredients(ingredients:list[str])-> list:
-    liste_parse =  [parse_string(ing) for ing in (ingredients or [])]
+    liste_parse =  [parse_string(normalize_quantity(ing)) for ing in (ingredients or [])]
     liste_parse = transform_parse_ingredient_to_dict(liste_parse)
-
     return liste_parse
 
 
@@ -51,11 +64,12 @@ def transform_parse_ingredient_to_dict(parse_ing) -> list[dict]:
     liste = []
 
     for ing in parse_ing:
-        # Nom et préparation de base
         name = ing.name[0].text if ing.name else ""
         preparation = ing.preparation.text if ing.preparation else ""
-        if check_in_liste(liste,name):
+
+        if check_in_liste(liste, name):
             continue
+
         if not ing.amount:
             liste.append({
                 "name": name,
@@ -64,16 +78,24 @@ def transform_parse_ingredient_to_dict(parse_ing) -> list[dict]:
                 "preparation": preparation
             })
             continue
-        else :
-            q = safe_quantity(ing.amount[0].quantity)
-            u = str(ing.amount[0].unit) if ing.amount[0].unit else ""
-            liste.append({
-                "name": name,
-                "quantity": q,
-                "unit": u,
-                "preparation": preparation
-            })
-            
+
+        comp = ing.amount[0]
+
+        if hasattr(comp, "amounts"):
+            quantities = [safe_quantity(a.quantity) for a in comp.amounts if a.quantity]
+            q = round(sum(quantities), 1) if quantities else None
+            u = str(comp.amounts[0].unit) if comp.amounts and comp.amounts[0].unit else ""   
+        else:
+            q = safe_quantity(comp.quantity)
+            u = str(comp.unit) if comp.unit else ""
+
+        liste.append({
+            "name": name,
+            "quantity": q,
+            "unit": u,
+            "preparation": preparation
+        })
+
     return liste
 
 
@@ -105,41 +127,3 @@ def normalize_data(recipe:dict) -> dict:
 
 
     
-import csv
-import json
-
-
-def csv_to_dict(csv_name_file:str,separator:str) -> list[dict]:
-    """ 
-        transform a csv file into a dict 
-        Args :
-            - A filename for a csv file 
-        Returns: 
-            - the list of dict with the csv data 
-            - Output format :  [{
-                "id": str,
-                "title": str,
-                "ingredients": list[str],
-                "directions": list[str] | None
-            },...]
-        Warning :
-            - the first row of the file need to have the name of the columns
-    """
-    result = []
-    with  open(csv_name_file) as file:
-        reader = csv.DictReader(file,delimiter=separator)
-        for row in reader:
-            row_dict = dict(row)
-            for key, value in row_dict.items():
-                if value and value[0] == '[':
-                    row_dict[key] = json.loads(value)
-            result.append(row_dict)
-    return result
-if __name__=="__main__":
-    d = csv_to_dict("./test.csv",',')
-    normalize_d = []
-    for i in d:
-        res = normalize_data(i)
-        normalize_d.append(res)
-        print(res["ingredients"])
-
