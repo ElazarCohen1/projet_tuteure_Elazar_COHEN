@@ -1,117 +1,178 @@
 """
-    This module insert data from a dataset into a given postgres database 
+    This module inserts data from a dataset into a given postgres database.
+    Uses batch inserts (execute_values) for performance.
 """
-from bdd.sql_request import SQL_requete
+import bdd.db as db
+from pgvector.psycopg2 import register_vector
+from psycopg2.extras import execute_values
 
 
-def insert_recipe(recipe: dict) -> int:
+def build_recipe_chunk(recipe: dict) -> str:
     """
-    Insert a recipe in the db .
-    RETURNS : the recipe_id 
+    Construit une chaîne de texte unique représentant toute la recette.
+    C'est ce texte qui sera embedé — il résume titre, ingrédients et étapes.
+    Exemple :
+        Recette : tarte aux pommes
+        Ingrédients : 3 pommes, 200g farine, 100g beurre
+        Étapes : Éplucher les pommes. Mélanger la farine et le beurre. ...
     """
-    result = SQL_requete(
-        "INSERT INTO recipe(title) VALUES (%s) RETURNING id",
-        (recipe["title"],),
+    title = recipe.get("title", "")
+
+    ingredients_parts = []
+    for ing in recipe.get("ingredients", []):
+        qty = f"{ing.get('quantity', '')} {ing.get('unit', '')}".strip()
+        name = ing.get("name", "")
+        ingredients_parts.append(f"{qty} {name}".strip() if qty else name)
+    ingredients_str = ", ".join(ingredients_parts)
+
+    steps_str = ". ".join(recipe.get("steps", []))
+
+    return f"Recette : {title}\nIngrédients : {ingredients_str}\nÉtapes : {steps_str}"
+
+
+
+
+def insert_recipes_batch(cur, recipes: list[dict]) -> list[int]:
+    """Insère toutes les recettes d'un chunk, retourne leurs IDs dans l'ordre."""
+    result = execute_values(
+        cur,
+        "INSERT INTO recipe(title) VALUES %s RETURNING id",
+        [(r["title"],) for r in recipes],
         fetch=True
     )
-    recipe_id = result[0].id
-    return recipe_id
+    return [row[0] for row in result]
 
-def insert_ingredients(recipe_id,ingredients:dict):
-    ingredient_ids = {}
-    for ing in ingredients:
-        res = SQL_requete(
-            """
-            INSERT INTO ingredients(name)
-            VALUES (%s)
-            ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-            RETURNING id
-            """,
-            (ing["name"],),
-            fetch=True
-        )
-        ingredient_ids[ing["name"]] = res[0].id
+
+def insert_ingredients_batch(cur, recipes: list[dict]) -> dict[str, int]:
+    """
+    Insère tous les ingrédients uniques du chunk.
+    Retourne un dict {name: id}.
+    """
+    all_names = list({
+        ing["name"]
+        for recipe in recipes
+        for ing in recipe.get("ingredients", [])
+        if ing.get("name")
+    })
+
+    if not all_names:
+        return {}
+
+    result = execute_values(
+        cur,
+        """
+        INSERT INTO ingredients(name) VALUES %s
+        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+        RETURNING id, name
+        """,
+        [(name,) for name in all_names],
+        fetch=True
+    )
+    return {row[1]: row[0] for row in result}  
     
-        check = SQL_requete(
-            "SELECT recipe_id,ingredient_id FROM recipe_ingredient WHERE recipe_id = %s AND ingredient_id = %s",
-            (recipe_id,
-            ingredient_ids[ing["name"]])
-        )
-        if not check :
-            continue
 
-        SQL_requete(
+
+def insert_recipe_ingredients_batch(cur, recipes: list[dict], recipe_ids: list[int], ingredient_ids: dict[str, int]):
+    """Insère toutes les liaisons recipe_ingredient du chunk en une seule requête."""
+    rows = []
+    for recipe, recipe_id in zip(recipes, recipe_ids):
+        for ing in recipe.get("ingredients", []):
+            name = ing.get("name")
+            if name and name in ingredient_ids:
+                rows.append((
+                    recipe_id,
+                    ingredient_ids[name],
+                    ing.get("quantity"),
+                    ing.get("unit"),
+                    ing.get("preparation")
+                ))
+
+    if rows:
+        execute_values(
+            cur,
             """
             INSERT INTO recipe_ingredient(recipe_id, ingredient_id, quantity, unit, particularity)
-            VALUES (%s, %s, %s, %s, %s)
+            VALUES %s
+            ON CONFLICT DO NOTHING
             """,
-            (
-                recipe_id,
-                ingredient_ids[ing["name"]],
-                ing.get("quantity"),
-                ing.get("unit"),
-                ing.get("preparation")
-            )
-        )    
+            rows
+        )
 
-def insert_steps(recipe_id:int, steps:dict):
-    for i in range(len(steps)) :
-        SQL_requete(
+
+def insert_steps_batch(cur, recipes: list[dict], recipe_ids: list[int]):
+    """Insère toutes les étapes du chunk en une seule requête."""
+    rows = [
+        (recipe_id, i, step)
+        for recipe, recipe_id in zip(recipes, recipe_ids)
+        for i, step in enumerate(recipe.get("steps", []))
+    ]
+
+    if rows:
+        execute_values(
+            cur,
+            "INSERT INTO steps(recipe_id, step_number, instruction) VALUES %s",
+            rows
+        )
+
+
+def insert_embeddings_batch(cur, recipes: list[dict], recipe_ids: list[int], embeddings):
+    """Insère tous les embeddings du chunk en une seule requête."""
+    rows = [
+        (recipe_id, build_recipe_chunk(recipe), emb.tolist(), "all-MiniLM-L6-v2")
+        for recipe, recipe_id, emb in zip(recipes, recipe_ids, embeddings)
+    ]
+
+    if rows:
+        execute_values(
+            cur,
             """
-                INSERT INTO steps(recipe_id,step_number,instruction) 
-                VALUES (%s,%s,%s)
+            INSERT INTO recipe_embeddings(recipe_id, chunk_text, embedding, model_version)
+            VALUES %s
+            ON CONFLICT (recipe_id) DO UPDATE
+                SET chunk_text    = EXCLUDED.chunk_text,
+                    embedding     = EXCLUDED.embedding,
+                    model_version = EXCLUDED.model_version
             """,
-            (
-               recipe_id,
-               i,
-               steps[i]
-            )
+            rows
         )
 
 
-def insert_embeddings(recipe:dict,model,recipe_id):
-    chunks = []
-    for i, step in enumerate(recipe["steps"]):
-        chunks.append({"chunk_text": step, "chunk_index": i, "chunk_type": "step"})
-
-    # ingredients
-    for i, ing in enumerate(recipe["ingredients"]):
-        text = f"{ing.get('quantity','')} {ing.get('unit','')} {ing['name']}".strip()
-        if text:
-            chunks.append({"chunk_text": text, "chunk_index": i, "chunk_type": "ingredient"})
-    
-    for c in chunks:
-        emb = model.encode(c["chunk_text"]).tolist()
-        SQL_requete(
-            "INSERT INTO recipe_embeddings(recipe_id, chunk_index, chunk_text, chunk_type, embedding, model_version) "
-            "VALUES (%s,%s,%s,%s,%s,%s)"
-            "ON CONFLICT (recipe_id, chunk_index, chunk_type) DO UPDATE "
-            "SET chunk_text = EXCLUDED.chunk_text, embedding = EXCLUDED.embedding, model_version = EXCLUDED.model_version",
-            
-            (recipe_id, c["chunk_index"], c["chunk_text"], c["chunk_type"], emb, "all-MiniLM-L6-v2")
-        )
-
-
-def insert_dataset(dataset: list[dict],model) -> bool:
+def insert_dataset(dataset: list[dict], model, chunk_size: int = 1000) -> bool:
     """
-    Insère un dataset complet de recettes.
+    Insère un dataset complet de recettes en batch.
     Args:
-        dataset (list[dict]): dataset normalisé
+        dataset    : liste de recettes normalisées
+        model      : SentenceTransformer déjà chargé
+        chunk_size : nombre de recettes par batch (défaut 1000)
     Returns:
-        bool: True si succès, False sinon
+        True si succès, False sinon
     """
     try:
-        for recipe in dataset:
-            recipe_id = insert_recipe(recipe)
-            insert_ingredients(recipe_id,recipe["ingredients"])
-            insert_steps(recipe_id,recipe["steps"])
-            insert_embeddings(recipe,model,recipe_id)
+        total = len(dataset)
+        with db.connect() as conn:
+            conn.autocommit = False  
+            register_vector(conn)
+
+            with conn.cursor() as cur:
+                for i in range(0, total, chunk_size):
+                    chunk = dataset[i:i + chunk_size]
+                    print(f"[{i + len(chunk)}/{total}] Insertion chunk {i // chunk_size + 1}...")
+
+                    texts = [build_recipe_chunk(r) for r in chunk]
+                    embeddings = model.encode(texts, batch_size=64, show_progress_bar=False)
+
+                    recipe_ids     = insert_recipes_batch(cur, chunk)
+                    ingredient_ids = insert_ingredients_batch(cur, chunk)
+
+                    insert_recipe_ingredients_batch(cur, chunk, recipe_ids, ingredient_ids)
+                    insert_steps_batch(cur, chunk, recipe_ids)
+                    insert_embeddings_batch(cur, chunk, recipe_ids, embeddings)
+
+                    conn.commit()
+                    print(f"  → chunk commité.")
+
         return True
+
     except Exception as e:
         print("Erreur lors de l'insertion du dataset :", e)
         return False
-
-
-
-
-  

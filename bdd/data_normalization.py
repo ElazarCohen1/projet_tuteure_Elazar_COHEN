@@ -8,7 +8,10 @@ from fractions import Fraction
 
 
 def parse_string(chaine:str):
-    return parse_ingredient(chaine.lower())
+    try:
+        return parse_ingredient(chaine.lower())
+    except Exception:
+        return parse_ingredient("")
    
 
 import re
@@ -32,13 +35,14 @@ def normalize_quantity(quantity:str):
         return ""
     
     quantity = quantity.replace("\\","/")
+    quantity = quantity.replace("'", "")
     return quantity.strip()
     
 
-def parse_list_ingredients(ingredients:list[str])-> list:
-    liste_parse =  [parse_string(normalize_quantity(ing)) for ing in (ingredients or [])]
-    liste_parse = transform_parse_ingredient_to_dict(liste_parse)
-    return liste_parse
+def parse_list_ingredients(ingredients: list[str]) -> list:
+    safe = [str(ing) for ing in (ingredients or []) if ing is not None]
+    liste_parse = [parse_string(normalize_quantity(ing)) for ing in safe]
+    return transform_parse_ingredient_to_dict(liste_parse)
 
 
 def safe_quantity(q):

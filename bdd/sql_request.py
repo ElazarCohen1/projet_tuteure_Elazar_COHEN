@@ -23,8 +23,15 @@ def SQL_requete(requete: str, params: tuple = None, fetch: bool = False):
 
             if fetch:
                 return cur.fetchall()  
-
-            conn.commit()
             return True
 
 
+
+def insert_list_tuples(table:str,values:tuple[tuple]) -> None:
+    """
+        insert dans une table des tuples de tuple (syntaxe de sql)
+    """
+    SQL_requete(
+            "INSERT INTO %s VALUES %s",
+            (table,values)
+        )

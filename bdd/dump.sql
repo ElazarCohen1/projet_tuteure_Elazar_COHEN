@@ -64,11 +64,8 @@ CREATE TABLE steps (
 
 
 CREATE TABLE recipe_embeddings (
-    recipe_id INT REFERENCES recipe(id) ON DELETE CASCADE,
-    chunk_index INT NOT NULL,
-    chunk_text TEXT NOT NULL,
-    chunk_type VARCHAR(50) NOT NULL, 
-    embedding vector(384),  
-    model_version VARCHAR(50) DEFAULT 'all-MiniLM-L6-v2',
-    PRIMARY KEY (recipe_id, chunk_index, chunk_type)
+    recipe_id   INT PRIMARY KEY REFERENCES recipe(id) ON DELETE CASCADE,
+    chunk_text  TEXT NOT NULL,
+    embedding   vector(384),
+    model_version VARCHAR(50) DEFAULT 'all-MiniLM-L6-v2'
 );
