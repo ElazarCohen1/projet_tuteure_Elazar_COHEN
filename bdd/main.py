@@ -1,76 +1,84 @@
-import bdd.data_normalization as N
-import bdd.data_insertion as I
-import bdd.research as R
+import data.data_normalization as N
+import data.csv_insertion as I
 import csv
-from sentence_transformers import SentenceTransformer
 import os
+import ast
+import time
 os.environ["HF_HUB_OFFLINE"] = "1"
-import ast 
-import asyncio # transform to async
-from typing import Iterator, List, Dict
 
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+def csv_to_dict(csv_name_file: str, separator: str = ',') -> list[dict]:
+    """Charge tout le CSV en mémoire d'un coup."""
+    dataset = []
 
-def csv_to_dict(csv_name_file: str, separator: str, size: int = 10000):
-    batch = []
-    i = 0
-
-    with open(csv_name_file, encoding='utf-8') as file:
+    with open(csv_name_file, encoding='utf-8', errors='replace') as file:
         reader = csv.DictReader(file, delimiter=separator)
+        print("Chargement du CSV...")
 
         for row in reader:
-            row_dict = dict(row)
+            row_dict = {}
+            for key, value in row.items():
+                if value is None:
+                    row_dict[key] = None
+                    continue
 
-            for key, value in row_dict.items():
-                if value:
-                    v_strip = value.strip()
-                    if v_strip.startswith('[') and v_strip.endswith(']'):
-                        try:
-                            row_dict[key] = ast.literal_eval(v_strip)
-                        except (ValueError, SyntaxError):
-                            pass
+                v_strip = value.strip()
 
-            batch.append(row_dict)
-            i += 1
+                if v_strip.startswith('[') and v_strip.endswith(']'):
+                    try:
+                        row_dict[key] = ast.literal_eval(v_strip)
+                        continue
+                    except (ValueError, SyntaxError):
+                        pass
 
-            if i >= size:
-                yield batch, i
-                batch = []
-                i = 0
+                row_dict[key] = v_strip
 
-        if batch:
-            yield batch, len(batch)
+            dataset.append(row_dict)
 
-async def generate_recipe(request: str):
-    loop = asyncio.get_event_loop()
-    
-    results = await loop.run_in_executor(None, R.search_similar, request, model, 5)
-    result = await loop.run_in_executor(None, R.ask_mistral_with_context, request, results)
-    
-    return result
+    print(f"{len(dataset)} lignes chargées.")
+    return dataset
 
+
+import time
 
 if __name__ == "__main__":
+    from sentence_transformers import SentenceTransformer
 
-    total_inserted = 0
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    total_start = time.perf_counter()
 
     try:
-        for batch, batch_size in csv_to_dict("./bdd/recipes_data.csv", ',', size=10000):
+        t_load = time.perf_counter()
+        raw_data = csv_to_dict("./bdd/test.csv")
+        print(f"Chargement terminé en {time.perf_counter() - t_load:.4f}s")
 
-            normalized_data = []
+        print("Normalisation des données...")
+        t_norm = time.perf_counter()
 
-            for row in batch:
-                normalized_data.append(N.normalize_data(row))
+        normalized_data = [
+            N.normalize_data(row, i)
+            for i, row in enumerate(raw_data)
+        ]
 
-            I.insert_dataset(normalized_data, model)
+        print(f"{len(normalized_data)} recettes normalisées en {time.perf_counter() - t_norm:.4f}s")
 
-            total_inserted += batch_size
+        print("Insertion dans la base...")
+        t_insert = time.perf_counter()
 
-            print(f"{total_inserted} lignes insérées...")
+        success = I.insert_dataset(normalized_data, model)
+
+        insert_time = time.perf_counter() - t_insert
+
+        if success:
+            print(f"Dataset inséré avec succès en {insert_time:.4f}s")
+        else:
+            print("Échec de l'insertion.")
+            exit(1)
+
+        total_time = time.perf_counter() - total_start
+        print(f"Temps total: {total_time:.4f}s")
 
     except Exception as e:
-        print("ERREUR INSERTION :", e)
+        print("ERREUR :", e)
         exit(1)
-
-    print("Dataset inséré avec succès !")

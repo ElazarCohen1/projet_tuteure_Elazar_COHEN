@@ -6,29 +6,25 @@ from ingredient_parser import parse_ingredient
 import re
 from fractions import Fraction
 
+# for not compile every time 
+_RE_CLEAN = re.compile(r"[^a-z0-9\s\./\-]")
+_RE_SPACES = re.compile(r"\s+")
+
 
 def parse_string(chaine:str):
     try:
         return parse_ingredient(chaine.lower())
     except Exception:
-        return parse_ingredient("")
+        return None
    
-
-import re
 
 def normalize_word(word: str) -> str:
     if not word:
         return ""
+    word = word.lower().replace("\\", " ")
+    word = _RE_CLEAN.sub(" ", word)
+    return _RE_SPACES.sub(" ", word).strip()
 
-    word = word.lower()
-
-    word = re.sub(r"[^a-z0-9\s\./\-]", " ", word)
-
-    word = word.replace("\\", " ")
-
-    word = re.sub(r"\s+", " ", word)
-
-    return word.strip()
 
 def normalize_quantity(quantity:str):
     if not quantity :
@@ -39,11 +35,16 @@ def normalize_quantity(quantity:str):
     return quantity.strip()
     
 
-def parse_list_ingredients(ingredients: list[str]) -> list:
-    safe = [str(ing) for ing in (ingredients or []) if ing is not None]
-    liste_parse = [parse_string(normalize_quantity(ing)) for ing in safe]
-    return transform_parse_ingredient_to_dict(liste_parse)
+def parse_one(ing: str):
+    return parse_string(normalize_quantity(ing))
 
+
+def parse_list_ingredients(ingredients):
+    safe = [str(ing) for ing in (ingredients or []) if ing]
+    if not safe:
+        return []
+    results = [parse_one(i) for i in safe]
+    return transform_parse_ingredient_to_dict([r for r in results if r])
 
 def safe_quantity(q):
     """Convertit quantity en float si possible, sinon None."""
@@ -57,22 +58,17 @@ def safe_quantity(q):
         return None
 
 
-def check_in_liste(l:list[dict],elm:str)->bool:
-    for d in l:
-        for value in d.values():
-            if value == elm:
-                return True
-    return False
-    
 def transform_parse_ingredient_to_dict(parse_ing) -> list[dict]:
     liste = []
-
+    seen_names = set()
     for ing in parse_ing:
         name = ing.name[0].text if ing.name else ""
         preparation = ing.preparation.text if ing.preparation else ""
 
-        if check_in_liste(liste, name):
+        if name in seen_names:
             continue
+
+        seen_names.add(name)
 
         if not ing.amount:
             liste.append({
@@ -94,6 +90,7 @@ def transform_parse_ingredient_to_dict(parse_ing) -> list[dict]:
             u = str(comp.unit) if comp.unit else ""
 
         liste.append({
+            
             "name": name,
             "quantity": q,
             "unit": u,
@@ -103,7 +100,7 @@ def transform_parse_ingredient_to_dict(parse_ing) -> list[dict]:
     return liste
 
 
-def normalize_data(recipe:dict) -> dict:
+def normalize_data(recipe:dict,new_recipe_id:int) -> dict:
     """
         Normalize one recipe 
         Args : 
@@ -127,7 +124,14 @@ def normalize_data(recipe:dict) -> dict:
 
     res["ingredients"] = list_ing
     res["steps"] = list_steps
+    res["id"] = new_recipe_id
     return res
 
 
     
+from multiprocessing import Pool, cpu_count
+
+def normalize_data_star(args):
+    row, i = args
+    return normalize_data(row, i)
+

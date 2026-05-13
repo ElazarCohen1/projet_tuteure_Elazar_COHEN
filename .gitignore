@@ -9,6 +9,8 @@
 
 # la securité des token
 bot/.env
+bot/__pycache__
+data/__pycache__
 
 # trop gros fichier de recette 
 bdd/recipes_data.csv

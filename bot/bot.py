@@ -2,8 +2,14 @@ import discord
 import os
 from dotenv import load_dotenv
 from discord.ext import commands 
-from bdd.main import generate_recipe
+import asyncio # transform to async
+import data.research as R
+
 load_dotenv()
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
 
 
 intents = discord.Intents.default()
@@ -33,6 +39,17 @@ def split_message(text: str, max_length: int = 1990) -> list[str]:
     if current:
         chunks.append(current)
     return chunks
+
+
+async def generate_recipe(request: str):
+    loop = asyncio.get_event_loop()
+    
+    results = await loop.run_in_executor(None, R.search_similar, request, model, 5)
+    result = await loop.run_in_executor(None, R.ask_mistral_with_context, request, results)
+    
+    return result
+
+
 
 
 @bot.tree.command(name="recette", description="renvoie une recette")

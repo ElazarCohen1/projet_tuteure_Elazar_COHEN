@@ -1,0 +1,7 @@
+psycopg2
+pgvector
+sentence-transformers
+ingredient-parser-nlp
+ollama
+discord.py
+python-dotenv
