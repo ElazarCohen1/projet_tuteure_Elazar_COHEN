@@ -1,0 +1,38 @@
+\frametitle{Solutions appliqu\'ees}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+  \textbf{Batch embeddings}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\tiny]
+# Avant : 1 appel par recette
+for recipe in dataset:
+    emb = model.encode(recipe)
+
+# Apres : 1 seul appel
+chunks = [build_chunk(r)
+          for r in dataset]
+embeddings = model.encode(
+    chunks,
+    batch_size=1024
+)
+  \end{lstlisting}
+\end{column}
+\begin{column}{0.48\textwidth}
+  \textbf{COPY PostgreSQL}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\tiny]
+def copy_rows(cur, table, cols, rows):
+    buf = io.StringIO()
+    writer = csv.writer(buf, delimiter='\t')
+    writer.writerows(rows)
+    buf.seek(0)
+    cur.copy_from(buf, table,
+                  columns=cols,
+                  sep='\t', null='')
+
+conn.autocommit = False
+copy_rows(cur, "recipe", ...)
+copy_rows(cur, "steps", ...)
+copy_rows(cur, "recipe_embeddings", ...)
+conn.commit()
+  \end{lstlisting}
+\end{column}
+\end{columns}

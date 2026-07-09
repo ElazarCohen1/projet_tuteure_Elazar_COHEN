@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     try:
         t_load = time.perf_counter()
-        raw_data = csv_to_dict("./bdd/test.csv")
+        raw_data = csv_to_dict("./bdd/recipes_data.csv")
         print(f"Chargement terminé en {time.perf_counter() - t_load:.4f}s")
 
         print("Normalisation des données...")

@@ -97,7 +97,7 @@ python3 -m bot.bot
 ## Fait
 
 ### Semaine 1 : 12 février - 19 février
-- Organisation et clarification du travail demandé  
+- Organisation et clarification du travail demandé 
 - Recherche des données
 - Création du schéma relationnel et création du dump de la base de données relationnelle
 
